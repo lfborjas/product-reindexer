@@ -9,22 +9,23 @@
 
 (defn connect
   "Takes some config, returns a connection to RMQ"
-  []
+  [{:keys [username password virtual-host host port]
+    :as config}]
   (-> (doto (ConnectionFactory.)
-        (.setUsername "luis")
-        (.setPassword "hunter2")
-        (.setVirtualHost "/birchbox-event-bus")
-        (.setHost "127.0.0.1")
-        (.setPort 5673))
+        (.setUsername username)
+        (.setPassword password)
+        (.setVirtualHost virtual-host)
+        (.setHost host)
+        (.setPort port))
       (.newConnection)))
 
 (defn setup-channel
-  "Takes a connection and sets up a channel with:
+  "Takes a connection and config and sets up a channel with:
   * a durable, non-autodelete exchange of 'direct' type
   * a durable, non-exclusive, non-autodelete queue with a well-known name
   Returns the channel"
-  [cxn & {:keys [queue-name exchange-name routing-key]
-          :as config}]
+  [cxn {:keys [queue-name exchange-name routing-key]
+        :as config}]
   (let [channel (.createChannel cxn)]
     (.exchangeDeclare channel exchange-name "direct" true)
     (.queueDeclare channel queue-name true false false nil)
@@ -46,9 +47,9 @@
     (.basicAck channel delivery-tag false)))
 
 (defn consume-forever
-  "Takes a channel, a consumer and a processor; consumes forever.
-  Dies upon exception, closing the channel"
-  [channel consumer processor]
+  "Takes a channel/cxn, a consumer and a processor; consumes forever.
+  Dies upon exception, closing the channel and connection"
+  [connection channel consumer processor]
   (try (loop []
          (consume-delivery channel
                            (.nextDelivery consumer)
@@ -57,7 +58,16 @@
        (catch Exception e
          (.printStackTrace e)
          (str "Failed (or killed) - " (.getMessage e)))
-       (finally (.close channel))))
+       (finally (.close channel)
+                (.close connection))))
+
+(defn subscribe-to-queue
+  "Takes some config and a processor, sets up stuff, consumes forever"
+  [config processor]
+  (let [connection (connect config)
+        channel    (setup-channel connection config)
+        consumer   (create-consumer channel (:queue-name config))]
+    (consume-forever connection channel consumer processor)))
 
 
 ;; Convenience methods:
@@ -125,9 +135,9 @@
 (comment
   (do (def cxn (connect))
       (def example-channel (setup-channel cxn
-                                          :queue-name "reindex"
-                                          :exchange-name "product-reindexer"
-                                          :routing-key "us.product"))
+                                          {:queue-name "reindex"
+                                           :exchange-name "product-reindexer"
+                                           :routing-key "us.product"}))
       (def example-consumer (create-consumer example-channel "reindex"))
       (println "At this point, you'd use some tool to publish a message")
       (consume-delivery example-channel
@@ -154,5 +164,16 @@
       ;; => got: hello world 2
       ;; ...
       (println "You probably killed the above; it closed the channel")
-      (subscribe-to-queue #(println ))
+      (println "Let's try with some toy config:")
+      (def config {:username "luis"
+                   :password "hunter2"
+                   :virtual-host "/birchbox-event-bus"
+                   :host "127.0.0.1"
+                   :port 5673
+                   :queue-name "reindex"
+                   :exchange-name "reindex-events"
+                   :routing-key "product_reindex"})
+      (defn print-message [d]
+        (println (str "Received: " (process-string d))))
+      (subscribe-to-queue config print-message)
       (.close cxn)))
