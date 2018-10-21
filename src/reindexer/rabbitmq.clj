@@ -69,11 +69,6 @@
   (let [delivery-body (slurp (.getBody delivery))]
     delivery-body))
 
-;; example usage:
-;; (you can use C-c M-p to throw sexps from here into the REPL)
-;; as per: https://cider.readthedocs.io/en/latest/interactive_programming/
-
-
 
 ;; Some notes:
 
@@ -122,35 +117,42 @@
  ;;     ch1.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
  ;; }
 
-(comment  (def cxn (connect))
-          (def example-channel (setup-channel cxn
-                                              :queue-name "reindex"
-                                              :exchange-name "product-reindexer"
-                                              :routing-key "us.product"))
-          (def example-consumer (create-consumer example-channel "reindex"))
-          (println "At this point, you'd use some tool to publish a message")
-          (consume-delivery example-channel
-                            (.nextDelivery example-consumer)
-                            println)
-          (println "The above call would block until there's a delivery, 
+;; example usage:
+;; (you can use C-c M-p to throw sexps from here into the REPL)
+;; as per: https://cider.readthedocs.io/en/latest/interactive_programming/
+
+
+(comment
+  (do (def cxn (connect))
+      (def example-channel (setup-channel cxn
+                                          :queue-name "reindex"
+                                          :exchange-name "product-reindexer"
+                                          :routing-key "us.product"))
+      (def example-consumer (create-consumer example-channel "reindex"))
+      (println "At this point, you'd use some tool to publish a message")
+      (consume-delivery example-channel
+                        (.nextDelivery example-consumer)
+                        println)
+      (println "The above call would block until there's a delivery,
                     and return hello world eventually")
-          (println "Or you can e.g. consume up to 3 messages:")
-          (let [cnt (atom 3)]
-            (while (pos? @cnt)
-              (do
-                (consume-delivery example-channel
-                                  (.nextDelivery example-consumer)
-                                  #(println (str "received: "
-                                                 (process-string %))))
-                (swap! cnt dec))))
-          (println "Also cool to just consumer forever:")
-          (consume-forever example-channel
-                           example-consumer
-                           #(println (str "got: "
-                                          (process-string %))))
-          ;; e.g.
-          ;; => got: hello world 1
-          ;; => got: hello world 2
-          ;; ...
-          (println "You probably killed the above; it closed the channel")
-          (.close cxn))
+      (println "Or you can e.g. consume up to 3 messages:")
+      (let [cnt (atom 3)]
+        (while (pos? @cnt)
+          (do
+            (consume-delivery example-channel
+                              (.nextDelivery example-consumer)
+                              #(println (str "received: "
+                                             (process-string %))))
+            (swap! cnt dec))))
+      (println "Also cool to just consumer forever:")
+      (consume-forever example-channel
+                       example-consumer
+                       #(println (str "got: "
+                                      (process-string %))))
+      ;; e.g.
+      ;; => got: hello world 1
+      ;; => got: hello world 2
+      ;; ...
+      (println "You probably killed the above; it closed the channel")
+      (subscribe-to-queue #(println ))
+      (.close cxn)))
