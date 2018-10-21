@@ -125,7 +125,13 @@
  ;;     QueueingConsumer.Delivery delivery = consumer.nextDelivery();
  ;;     // process delivery
  ;;     ch1.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
- ;; }
+;; }
+
+;; More references for RMQ:
+
+;; * https://www.rabbitmq.com/api-guide.html#connecting
+;; * https://www.rabbitmq.com/releases/rabbitmq-java-client/v2.1.1/rabbitmq-java-client-javadoc-2.1.1/com/rabbitmq/client/QueueingConsumer.html
+;; * https://www.cloudamqp.com/blog/2015-09-03-part4-rabbitmq-for-beginners-exchanges-routing-keys-bindings.html
 
 ;; example usage:
 ;; (you can use C-c M-p to throw sexps from here into the REPL)
