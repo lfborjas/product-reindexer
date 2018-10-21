@@ -2,6 +2,6 @@
   (:gen-class))
 
 (defn -main
-  "I don't do a whole lot ... yet."
+  "Infinite loop that picks up reindex messages and sends them to solr"
   [& args]
   (println "Hello, World!"))

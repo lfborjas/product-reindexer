@@ -41,6 +41,17 @@ The plan is:
 * How to harmlessly test writing to the solr core?
 * Need to map JSON(?) objects to EDN, then write them to SOLR
 
+Looks like we _can_ port forward RMQ and solr from dev boxes:
+
+https://birchbox.atlassian.net/wiki/spaces/TECH/pages/43155572/Service+Catalog
+
+Just need to hijack the birchbox event bus, perhaps?
+
+Admin iface:
+
+http://rabbitmq.luis-beta.dev.birchbox.com:15672/#/
+
+(gave myself admin access, with a silly password)
 
 
 ## Usage
