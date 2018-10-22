@@ -1,0 +1,18 @@
+# all of these are toy configs that only work on my laptop
+# please update accordingly on your copy and never check in
+# production credentials!
+export RMQ_USERNAME=luis
+export RMQ_PASSWORD=hunter2
+export RMQ_VHOST="/birchbox-event-bus"
+export RMQ_HOST="127.0.0.1"
+export RMQ_PORT=5673
+export RMQ_QUEUE_NAME=reindex
+export RMQ_EXCHANGE_NAME="reindex-events"
+export RMQ_ROUTING_KEY=product_reindex
+export SOLR_URLS="http://127.0.0.1:8081/solr440/products"
+
+# This little shell script should cohabitate with the jar
+# the command lein uberjar usually puts jars in target/uberjar
+# ideally you'd copy that jar and put it somewhere sensible in the
+# server.
+java -jar reindexer-0.1.0-SNAPSHOT-standalone.jar
