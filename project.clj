@@ -4,6 +4,7 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.8.0"]
+                 [org.clojure/data.json "0.2.6"]
                  ; these older versions match our sad prod/dev java/solr
                  [com.rabbitmq/amqp-client "4.8.3"]
                   ; this bullshit is required by the http solr server:
