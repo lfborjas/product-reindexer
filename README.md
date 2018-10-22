@@ -11,10 +11,14 @@ If you manually put in this message (which is a full product representation):
 
 ```
 
+(Ideally an API puts the messages, but let's say it's from RabbitMQ's admin interface):
+
+![image](https://user-images.githubusercontent.com/82133/47277021-b80e9780-d589-11e8-966f-3b3459135a04.png)
+
+
 It'll consume it and chuck it onto solr:
 
-See the `comment` blocks at the end of each of the source files for some thoughts on interactive development (inspired by Stuart Halloway's ["running with scissors" talk](https://www.youtube.com/watch?v=Qx0-pViyIDU))
-
+![image](https://user-images.githubusercontent.com/82133/47277035-e5f3dc00-d589-11e8-99b6-40bb01d3683f.png)
 
 ## Usage
 
@@ -28,6 +32,8 @@ However, it needs some env vars; see the example shell script for the env variab
 
 
 ## Development
+
+See the `comment` blocks at the end of each of the source files for some thoughts on interactive development (inspired by Stuart Halloway's ["running with scissors" talk](https://www.youtube.com/watch?v=Qx0-pViyIDU))
 
 I'm using `leiningen` for project management, Emacs + CIDER for interactive development, and a couple of ssh tunnels to my development ec2 instance to leverage its rabbitmq and solr (need to have an ssh session for these to be picked up, natch):
 
