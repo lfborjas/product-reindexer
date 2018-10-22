@@ -13,12 +13,13 @@ If you manually put in this message (which is a full product representation):
 
 (Ideally an API puts the messages, but let's say it's from RabbitMQ's admin interface):
 
-![image](https://user-images.githubusercontent.com/82133/47277021-b80e9780-d589-11e8-966f-3b3459135a04.png)
+![image](https://user-images.githubusercontent.com/82133/47277035-e5f3dc00-d589-11e8-99b6-40bb01d3683f.png)
 
 
 It'll consume it and chuck it onto solr:
 
-![image](https://user-images.githubusercontent.com/82133/47277035-e5f3dc00-d589-11e8-99b6-40bb01d3683f.png)
+![image](https://user-images.githubusercontent.com/82133/47277021-b80e9780-d589-11e8-966f-3b3459135a04.png)
+
 
 ## Usage
 
