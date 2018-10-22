@@ -69,3 +69,8 @@ http://rabbitmq.luis-beta.dev.birchbox.com:15672/#/
 * https://lucene.apache.org/solr/4_2_1/solr-solrj/org/apache/solr/common/SolrInputDocument.html
 * https://wiki.apache.org/solr/UpdateXmlMessages
 * https://lucene.apache.org/solr/4_2_1/solr-solrj/org/apache/solr/common/SolrDocument.html#setField(java.lang.String,%20java.lang.Object)
+
+## Next steps
+
+* Consider adding a try-catch to the method that allows consumption of messages: if we don't ack, they get requeued; these kinds of messages do more harm than good when requeued.
+* Look into better logging: it's essential to being able to trust this little program
