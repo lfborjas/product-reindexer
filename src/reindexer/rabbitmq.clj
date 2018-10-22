@@ -40,10 +40,11 @@
     consumer))
 
 (defn consume-delivery
-  "Takes a channel and a delivery, applies a processor, acks"
+  "Takes a channel and a delivery, applies a processor to the msg; acks"
   [channel delivery processor]
-  (let [delivery-tag (-> delivery .getEnvelope .getDeliveryTag)]
-    (processor delivery)
+  (let [delivery-tag  (-> delivery .getEnvelope .getDeliveryTag)
+        delivery-body (slurp (.getBody delivery))]
+    (processor delivery-body)
     (.basicAck channel delivery-tag false)))
 
 (defn consume-forever
@@ -68,16 +69,6 @@
         channel    (setup-channel connection config)
         consumer   (create-consumer channel (:queue-name config))]
     (consume-forever connection channel consumer processor)))
-
-
-;; Convenience methods:
-
-(defn process-string
-  "Example delivery processor that just gets the body of the delivery
-  and doesn't check for routing keys or anything"
-  [delivery]
-  (let [delivery-body (slurp (.getBody delivery))]
-    delivery-body))
 
 ;; Some notes:
 
@@ -155,14 +146,12 @@
           (do
             (consume-delivery example-channel
                               (.nextDelivery example-consumer)
-                              #(println (str "received: "
-                                             (process-string %))))
+                              #(println (str "received: " %)))
             (swap! cnt dec))))
       (println "Also cool to just consumer forever:")
       (consume-forever example-channel
                        example-consumer
-                       #(println (str "got: "
-                                      (process-string %))))
+                       #(println (str "got: " %)))
       ;; e.g.
       ;; => got: hello world 1
       ;; => got: hello world 2
@@ -177,7 +166,7 @@
                    :queue-name "reindex"
                    :exchange-name "reindex-events"
                    :routing-key "product_reindex"})
-      (defn print-message [d]
-        (println (str "Received: " (process-string d))))
+      (defn print-message [message]
+        (println (str "Received: " message)))
       (subscribe-to-queue config print-message)
       (.close cxn)))
