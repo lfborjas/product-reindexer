@@ -79,7 +79,6 @@
   (let [delivery-body (slurp (.getBody delivery))]
     delivery-body))
 
-
 ;; Some notes:
 
 ;; Followed this guide:
@@ -136,7 +135,6 @@
 ;; example usage:
 ;; (you can use C-c M-p to throw sexps from here into the REPL)
 ;; as per: https://cider.readthedocs.io/en/latest/interactive_programming/
-
 
 (comment
   (do (def cxn (connect))

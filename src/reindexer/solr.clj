@@ -3,7 +3,6 @@
            [org.apache.solr.client.solrj.impl HttpSolrServer]
            [org.apache.solr.common SolrInputDocument]))
 
-
 (defn connect-to-cores
   "Given a config map, connects to a remote solr instance via http"
   [urls]
@@ -31,9 +30,6 @@
     (doseq [c clients]
       (.add c documents)
       (.commit c))))
-
-
-
 
 ;; Some notes
 ;; Had to tread carefully because solrj ifaces are always changing, thankfully
