@@ -22,8 +22,10 @@
   [config]
   (let [clients (solr/connect-to-cores (:solr-urls config))]
     (fn [message-body]
-      (let [json-maps (json/read-str message-body)]
-            (solr/update-in-cores clients json-maps)))))
+      (try (let [json-maps (json/read-str message-body)]
+             (solr/update-in-cores clients json-maps))
+           (catch Exception e
+             (println (str "Error reindexing, skipping")))))))
 
 (defn -main
   "Infinite loop that picks up reindex messages and sends them to solr"
