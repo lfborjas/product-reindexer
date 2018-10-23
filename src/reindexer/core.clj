@@ -2,7 +2,8 @@
   (:gen-class)
   (:require [reindexer.rabbitmq :as rmq]
             [reindexer.solr :as solr]
-            [clojure.data.json :as json]))
+            [clojure.data.json :as json]
+            [clojure.tools.logging :as log]))
 
 (defn build-config
   "Grabs config from the environment"
@@ -23,9 +24,12 @@
   (let [clients (solr/connect-to-cores (:solr-urls config))]
     (fn [message-body]
       (try (let [json-maps (json/read-str message-body)]
+             (log/info (str "About to index: "
+                            (clojure.string/join ","
+                                                 (map #(get % "id") json-maps))))
              (solr/update-in-cores clients json-maps))
            (catch Exception e
-             (println (str "Error reindexing, skipping")))))))
+             (log/error e "Error reindexing, skipping!"))))))
 
 (defn -main
   "Infinite loop that picks up reindex messages and sends them to solr"
