@@ -45,11 +45,20 @@
   ; and then spins up two closures from the libs and lets
   ; them run forever
   (defn json-consumer
-    "Helps with repl debuggin"
+    "Helps with repl debugging"
     [config]
     (fn [message-body]
       (clojure.pprint/pprint (json/read-str message-body))))
-  (let [config       (build-config)
+  (defn json-exhauster [_] #(println %))
+  (let [config       {:username "luis"
+                      :password "hunter2"
+                      :virtual-host "/birchbox-event-bus"
+                      :host "127.0.0.1"
+                      :port 5673
+                      :queue-name "reindex"
+                      :exchange-name "reindex-events"
+                      :routing-key "product_reindex"
+                      :solr-urls (clojure.string/split "http://127.0.0.1:8081/solr440/products" #",")}
         sub-forever  (partial rmq/subscribe-to-queue config)
         ; can also send json-consumer if you're playing around in
         ; the REPL
