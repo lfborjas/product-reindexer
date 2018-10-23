@@ -24,6 +24,9 @@
   (let [clients (solr/connect-to-cores (:solr-urls config))]
     (fn [message-body]
       (try (let [json-maps (json/read-str message-body)]
+             (log/info (str "About to index: "
+                            (clojure.string/join ","
+                                                 (map #(get % "id") json-maps))))
              (solr/update-in-cores clients json-maps))
            (catch Exception e
              (log/error e "Error reindexing, skipping!"))))))
