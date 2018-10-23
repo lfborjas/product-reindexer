@@ -7,23 +7,25 @@
 (defn build-config
   "Grabs config from the environment"
   []
-  {:username "luis"
-   :password "hunter2"
-   :virtual-host "/birchbox-event-bus"
-   :host "127.0.0.1"
-   :port 5673
-   :queue-name "reindex"
-   :exchange-name "reindex-events"
-   :routing-key "product_reindex"
-   :solr-urls (clojure.string/split "http://127.0.0.1:8081/solr440/products" #",")})
+  {:username (System/getenv "RMQ_USERNAME")
+   :password (System/getenv "RMQ_PASSWORD")
+   :virtual-host (System/getenv "RMQ_VHOST")
+   :host (System/getenv "RMQ_HOST")
+   :port (Integer/parseInt (System/getenv "RMQ_PORT"))
+   :queue-name (System/getenv "RMQ_QUEUE_NAME")
+   :exchange-name (System/getenv "RMQ_EXCHANGE_NAME")
+   :routing-key (System/getenv "RMQ_ROUTING_KEY")
+   :solr-urls (clojure.string/split (System/getenv "SOLR_URLS") #",")})
 
 (defn json-reindexer
   "Takes a config and returns a closed-over fn that can update solr cores from JSON"
   [config]
   (let [clients (solr/connect-to-cores (:solr-urls config))]
     (fn [message-body]
-      (let [json-maps (json/read-str message-body)]
-            (solr/update-in-cores clients json-maps)))))
+      (try (let [json-maps (json/read-str message-body)]
+             (solr/update-in-cores clients json-maps))
+           (catch Exception e
+             (println (str "Error reindexing, skipping")))))))
 
 (defn -main
   "Infinite loop that picks up reindex messages and sends them to solr"
@@ -43,11 +45,20 @@
   ; and then spins up two closures from the libs and lets
   ; them run forever
   (defn json-consumer
-    "Helps with repl debuggin"
+    "Helps with repl debugging"
     [config]
     (fn [message-body]
       (clojure.pprint/pprint (json/read-str message-body))))
-  (let [config       (build-config)
+  (defn json-exhauster [_] #(println %))
+  (let [config       {:username "luis"
+                      :password "hunter2"
+                      :virtual-host "/birchbox-event-bus"
+                      :host "127.0.0.1"
+                      :port 5673
+                      :queue-name "reindex"
+                      :exchange-name "reindex-events"
+                      :routing-key "product_reindex"
+                      :solr-urls (clojure.string/split "http://127.0.0.1:8081/solr440/products" #",")}
         sub-forever  (partial rmq/subscribe-to-queue config)
         ; can also send json-consumer if you're playing around in
         ; the REPL

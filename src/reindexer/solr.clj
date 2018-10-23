@@ -18,8 +18,12 @@
 (defn as-input-document
   "Given a clojure map with string keys, return a solr input document"
   [m]
-  (let [document (SolrInputDocument.)]
-    (doseq [[name value] m]
+  (let [document (SolrInputDocument.)
+        ; filter out nils, empty strings and empty arrays
+        allowed-value? #(not (or (nil? %)
+                                 (some #{"" []} #{%})))]
+    (doseq [[name value] m
+            :when (allowed-value? value)]
       (.addField document name value))
     document))
 
