@@ -11,7 +11,7 @@
    :password (System/getenv "RMQ_PASSWORD")
    :virtual-host (System/getenv "RMQ_VHOST")
    :host (System/getenv "RMQ_HOST")
-   :port (System/getenv "RMQ_PORT")
+   :port (Integer/parseInt (System/getenv "RMQ_PORT"))
    :queue-name (System/getenv "RMQ_QUEUE_NAME")
    :exchange-name (System/getenv "RMQ_EXCHANGE_NAME")
    :routing-key (System/getenv "RMQ_ROUTING_KEY")
