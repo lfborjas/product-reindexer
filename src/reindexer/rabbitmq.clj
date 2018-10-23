@@ -56,9 +56,6 @@
                            (.nextDelivery consumer)
                            processor)
          (recur))
-       (catch Exception e
-         (.printStackTrace e)
-         (str "Failed (or killed) - " (.getMessage e)))
        (finally (.close channel)
                 (.close connection))))
 
