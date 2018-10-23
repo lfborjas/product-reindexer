@@ -7,15 +7,15 @@
 (defn build-config
   "Grabs config from the environment"
   []
-  {:username "luis"
-   :password "hunter2"
-   :virtual-host "/birchbox-event-bus"
-   :host "127.0.0.1"
-   :port 5673
-   :queue-name "reindex"
-   :exchange-name "reindex-events"
-   :routing-key "product_reindex"
-   :solr-urls (clojure.string/split "http://127.0.0.1:8081/solr440/products" #",")})
+  {:username (System/getenv "RMQ_USERNAME")
+   :password (System/getenv "RMQ_PASSWORD")
+   :virtual-host (System/getenv "RMQ_VHOST")
+   :host (System/getenv "RMQ_HOST")
+   :port (System/getenv "RMQ_PORT")
+   :queue-name (System/getenv "RMQ_QUEUE_NAME")
+   :exchange-name (System/getenv "RMQ_EXCHANGE_NAME")
+   :routing-key (System/getenv "RMQ_ROUTING_KEY")
+   :solr-urls (clojure.string/split (System/getenv "SOLR_URLS") #",")})
 
 (defn json-reindexer
   "Takes a config and returns a closed-over fn that can update solr cores from JSON"
