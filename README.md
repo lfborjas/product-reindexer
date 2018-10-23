@@ -2,7 +2,11 @@
 
 Little clojure project meant to be run on old servers for a few months, as a JAR compiled for java 6. Due to our old versions of rabbitmq and solr (and java!), I had to use very specific, and ancient, versions of java libraries and couldn't leverage more general-purpose clojure wrappers for RabbitMQ ([langohr](http://clojurerabbitmq.info/)) and solr (there's [flux](https://github.com/mwmitchell/flux) but it's... okay).
 
-It expects JSON payloads on a very specific rabbitmq queue, and will add documents on a very specific Solr core (or set thereof). For example:
+It expects JSON payloads on a very specific rabbitmq queue, and will add documents on a very specific Solr core (or set thereof).
+
+It writes to a log file in its dir (`reindexer.log`), which uses log4j's [`RollingFileAppender`](https://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/RollingFileAppender.html) to keep its filesystem footprint small (keeps up to 20 1MB log files). For now it writes some INFO log messages when it's about to reindex, and it'll skip queue payloads that cause exceptions (dutifully logging their stacktraces, but not requeing). It's meant to chug along pretty much forever, unless an exception happens outside of the reindexing function--in which case it'll neatly close its connection to RMQ before dying.
+
+For example:
 
 If you manually put in this message (which is a full product representation):
 
@@ -19,6 +23,47 @@ If you manually put in this message (which is a full product representation):
 It'll consume it and chuck it onto solr:
 
 ![image](https://user-images.githubusercontent.com/82133/47277021-b80e9780-d589-11e8-966f-3b3459135a04.png)
+
+If you tail its log, you may see this (notice that, since `map` is lazy, this first message will open the connections to the solr cores):
+
+```
+[2018-10-23 01:06:06,111][INFO][reindexer.core] About to index: 111
+[2018-10-23 01:06:06,120][INFO][org.apache.solr.client.solrj.impl.HttpClientUtil] Creating new http client, config:maxConnections=128&maxConnectionsPerHost=32&followRedirects=false
+```
+
+And if you send a bad payload, it'll log that error (in this case, malformed JSON) and keep chugging along:
+
+```
+[2018-10-23 01:05:30,376][ERROR][reindexer.core] Error reindexing, skipping!
+java.lang.Exception: JSON error (expected false)
+	at clojure.data.json$_read.invokeStatic(json.clj:215)
+	at clojure.data.json$_read.invoke(json.clj:177)
+	at clojure.data.json$read.invokeStatic(json.clj:272)
+	at clojure.data.json$read.doInvoke(json.clj:228)
+	at clojure.lang.RestFn.invoke(RestFn.java:410)
+	at clojure.lang.AFn.applyToHelper(AFn.java:154)
+	at clojure.lang.RestFn.applyTo(RestFn.java:132)
+	at clojure.core$apply.invokeStatic(core.clj:648)
+	at clojure.core$apply.invoke(core.clj:641)
+	at clojure.data.json$read_str.invokeStatic(json.clj:278)
+	at clojure.data.json$read_str.doInvoke(json.clj:274)
+	at clojure.lang.RestFn.invoke(RestFn.java:410)
+	at reindexer.core$json_reindexer$fn__409.invoke(core.clj:26)
+	at reindexer.rabbitmq$consume_delivery.invokeStatic(rabbitmq.clj:47)
+	at reindexer.rabbitmq$consume_delivery.invoke(rabbitmq.clj:42)
+	at reindexer.rabbitmq$consume_forever.invokeStatic(rabbitmq.clj:55)
+	at reindexer.rabbitmq$consume_forever.invoke(rabbitmq.clj:50)
+	at reindexer.rabbitmq$subscribe_to_queue.invokeStatic(rabbitmq.clj:68)
+	at reindexer.rabbitmq$subscribe_to_queue.invoke(rabbitmq.clj:62)
+	at clojure.core$partial$fn__4759.invoke(core.clj:2515)
+	at reindexer.core$_main.invokeStatic(core.clj:40)
+	at reindexer.core$_main.doInvoke(core.clj:34)
+	at clojure.lang.RestFn.invoke(RestFn.java:397)
+	at clojure.lang.AFn.applyToHelper(AFn.java:152)
+	at clojure.lang.RestFn.applyTo(RestFn.java:132)
+	at reindexer.core.main(Unknown Source)
+
+```
 
 
 ## Usage
