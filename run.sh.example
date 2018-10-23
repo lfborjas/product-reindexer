@@ -11,8 +11,8 @@ export RMQ_EXCHANGE_NAME="reindex-events"
 export RMQ_ROUTING_KEY=product_reindex
 export SOLR_URLS="http://127.0.0.1:8081/solr440/products"
 
-# This little shell script should cohabitate with the jar
-# the command lein uberjar usually puts jars in target/uberjar
-# ideally you'd copy that jar and put it somewhere sensible in the
-# server.
-java -jar reindexer-0.1.0-SNAPSHOT-standalone.jar
+# This little script is meant to be run from the root of the project in dev.
+# The command lein uberjar usually puts jars in target/uberjar;
+# ideally you'd copy that jar and put it somewhere sensible in the server
+# and just edit this script to point there; or have them cohabitate.
+java -jar ./target/uberjar/reindexer-0.1.0-SNAPSHOT-standalone.jar

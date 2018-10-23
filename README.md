@@ -27,7 +27,7 @@ Ideally, you should grab the standalone uberjar and chuck it on a server:
 
     $ java -jar uberjar/reindexer-0.1.0-SNAPSHOT-standalone.jar
 
-However, it needs some env vars; see the example shell script for the env variables that it expects to pick up, which enables something like:
+However, it needs some env vars; see the example shell script for the env variables that it expects to pick up, so you can use `run.sh.example` as a basis for something like:
 
     $ ./reindexer.sh
 
@@ -47,11 +47,3 @@ Host new-dev
   LocalForward 5673 rabbitmq:5672
   LocalForward 8081 solr:8080
 ```
-
-
-## Bugs/caveats
-
-Notice that, to keep things safe, this is brittle by design: `subscribe-to-queue` will try to run but it'll die on any exception. Still thinking how best to design that -- so it doesn't run forever when bad data is coming in, but also doesn't die without cleaning up.
-
-
-
