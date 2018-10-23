@@ -11,3 +11,4 @@ pom.xml.asc
 .hg/
 .env
 run.sh
+reindexer.log*
