@@ -5,8 +5,9 @@
 
 (defn connect-to-cores
   "Given a config map, connects to a remote solr instance via http"
-  [urls]
-  (map #(HttpSolrServer. %) urls))
+  [urls core-name]
+  (let [core-urls (map #(str % "/" (name core-name)) urls)]
+    (map #(HttpSolrServer. %) core-urls)))
 
 (defn query-solr
   "Given a solr cxn and a query, return a collection of results"
@@ -34,6 +35,13 @@
     (doseq [c clients]
       (.add c documents)
       (.commit c))))
+
+(defn remove-from-cores
+  "Given an array of connections and ids, remove the identified documents"
+  [clients id-list]
+  (doseq [c clients]
+    (.deleteById id-list)
+    (.commit c)))
 
 ;; Some notes
 ;; Had to tread carefully because solrj ifaces are always changing, thankfully
