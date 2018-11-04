@@ -1,6 +1,35 @@
 # Reindexer
 
-Little clojure project meant to be run on old servers for a few months, as a JAR compiled for java 6. Due to our old versions of rabbitmq and solr (and java!), I had to use very specific, and ancient, versions of java libraries and couldn't leverage more general-purpose clojure wrappers for RabbitMQ ([langohr](http://clojurerabbitmq.info/)) and solr (there's [flux](https://github.com/mwmitchell/flux) but it's... okay).
+## History
+
+At work, we have batch jobs that update our Solr indexes for product data on a fixed schedule. However, sometimes people update products and need to see the changes immediately (or at least much earlier than the next invocation of the indexer jobs); as a bit of tech debt, we didn't build/design code that observes changes to products and triggers one-off Solr updates. For quite a bit, we've had to update products manually (with some scripts). 
+
+There's a separate project that doesn't have these issues, and we're deploying it soon! For the time being, we needed to do something better than engineers running scripts to trigger index updates, but not a full-fledged refactoring of the guts of our e-commerce catalog management. We thought about a self serve "click a button, get a reindex" situation involving an API that gets that request, passes it on to a queue, and a consumer does the actual reindexing. The solutions we found in the rails ecosystem weren't compatible with our stack, and upgrading/shuffling things wasn't worth given that the new replacement project didn't have this issue by design. 
+
+In a "let's pay down this tech debt" frenzy, I decided to look for something we _could_ build with our current stack, with minimal operational complexity. A little jar that used established Java libraries to talk to RabbitMQ (already in use by other projects) seemed like a good idea. Except for the Java part. Enter this little project.
+
+I coded the whole thing on a Sunday, added some logging refinements on a Monday, bounced the idea off a few people on a Tuesday--with good feedback! Decided to kill it on a Wednesday.
+
+Why? I realized, as explained below, it didn't _full_ solve the problem (there was still quite a bit of business logic and database munging that would need to be done, and that was already done in the context of our Ruby apis). So I decided to just write a queue consumer _there_ and not only leverage existing infrastructure, but also an existing codebase. It isn't as pithy as this or as elegant as more modern Ruby on Rails approaches (which is why I somehow didn't see that solution at first!), but it'll get the job done with even fewer moving parts than this.
+
+However, I'm happy with the java interop experience and to know that this is yet another quick win (like my XML [mockery](https://github.com/lfborjas/mockery) service) for my team that Clojure could help with. This time however, I didn't _actually_ need to compromise the stability of our internal ecosystem, so I'm leaving this as an open source reference project, for perhaps others (or future me) who may be resource constrained when solving a problem and/or want to leverage the power of the JVM without the J part of the acronym if it can be helped.
+
+## Design principles
+
+* Introduce the least amount of operational complexity: we already have Java in our servers, and we already have RabbitMQ and Solr. A Jar that reads its config from the environment and logs to STDOUT checks those boxes.
+* Have no proprietary business logic: just pick up messages from a queue, translate to Solr documents and put them on Solr; no secret sauce (or coupling!) on how to derive product information (allows to open source and also to consume different representations in the future).
+* Be deployable on a server meant for batch jobs and other internal tooling (where, coincidentally, RMQ and Solr reside). 
+
+## How this was _not_ deployed in the end: counterpoints to the design principles
+
+* Even though this was conceived to be easy to sneak in without creating much operational debt as an explicit design principle (it's a little jar that includes all of its dependencies and only needs some env vars to be set), it's still requiring _some debt_: it's more code to maintain, and only me and one other engineer know Clojure at work. My initial impetus was that, if we wanted something like this on our existing Ruby codebases, we'd need to introduce Redis and upgrade the target Rails service to be compatible with Sidekiq. These seemed like larger operational costs to pay for something that would only be needed for a few more months until we introduced a new service with event-based reindexing built-in. 
+* I didn't want the crazy business logic that prepares products for Solr here, because it's proprietary, coupled to our e-commerce system and, frankly, a lot. However, after doing profiling on the API that would've created the messages for this lil daemon to consume, it dawned on me that, yes, putting those documents on a queue solves the "web servers shouldn't write to Solr" problem, but the majority of the heavy lifting happens _when_ computing the documents, not when writing to solr. So all the work that should be done asynchronously to not overtax the web servers _is_ in the business logic. 
+
+Given the above, I decided to bite the bullet and write a Ruby queue consumer in the web api itself using [sneakers](https://github.com/jondot/sneakers/tree/v1.0.4/lib/sneakers) (a version compatible with our current production stack) that would, like this Clojure daemon, pick up reindex product messages from the queue, but, since it resides in the same repository of our product service, also have access to all the models that derive documents--thus allowing the web-facing API to just publish ids as messages and delegating the heavy lifting of constructing the documents to the queue consumer, as it should be.
+
+## How it works (or would've worked):
+
+Due to our old versions of rabbitmq and solr (and java!), I had to use very specific, and ancient, versions of java libraries and couldn't leverage more general-purpose clojure wrappers for RabbitMQ ([langohr](http://clojurerabbitmq.info/)) and solr (there's [flux](https://github.com/mwmitchell/flux) but it's... okay).
 
 It expects JSON payloads on a very specific rabbitmq queue, and will add documents on a very specific Solr core (or set thereof).
 
