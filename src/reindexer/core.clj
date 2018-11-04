@@ -3,7 +3,8 @@
   (:require [reindexer.rabbitmq :as rmq]
             [reindexer.solr :as solr]
             [clojure.data.json :as json]
-            [clojure.tools.logging :as log]))
+            [clojure.tools.logging :as log]
+            [clojure.string :as s]))
 
 (defn build-config
   "Grabs config from the environment"
@@ -18,16 +19,33 @@
    :routing-key (System/getenv "RMQ_ROUTING_KEY")
    :solr-urls (clojure.string/split (System/getenv "SOLR_URLS") #",")})
 
-(defn json-reindexer
+(defn reindexer
+  "Takes core connections and an envelope, reindexes"
+  [clients json-message]
+  (let [to-index    (get json-message "to_index" [])
+        remove-ids  (get json-message "to_remove" [])
+        index-ids   (map #(get % "id") to-index)]
+    (log/info (str "About to index: " (s/join "," index-ids)))
+    (solr/update-in-cores clients to-index)
+    (log/info (str "About to remove: " (s/join "," remove-ids)))
+    (solr/remove-from-cores clients to-remove)))
+
+(defn solr-consumer
   "Takes a config and returns a closed-over fn that can update solr cores from JSON"
   [config]
-  (let [clients (solr/connect-to-cores (:solr-urls config))]
+  (let [solr-urls      (:solr-urls config)
+        product-cores  (solr/connect-to-cores solr-urls :products)
+        category-cores (solr/connect-to-cores solr-urls :categories)
+        brand-cores    (solr/connect-to-cores solr-urls :brands)]
     (fn [message-body]
-      (try (let [json-maps (json/read-str message-body)]
-             (log/info (str "About to index: "
-                            (clojure.string/join ","
-                                                 (map #(get % "id") json-maps))))
-             (solr/update-in-cores clients json-maps))
+      (try (let [json-message (json/read-str message-body)
+                 core         (get json-message "core")]
+             (log/info (str "Received reindex message (" core ")"))
+             (case core
+               "products"   (reindexer product-cores json-message)
+               "categories" (reindexer category-cores json-message)
+               "brands"     (reindexer brand-cores json-message)
+               (log/warn (str "Unknown core: " core))))
            (catch Exception e
              (log/error e "Error reindexing, skipping!"))))))
 
@@ -36,7 +54,7 @@
   [& args]
   (let [config       (build-config)
         sub-forever  (partial rmq/subscribe-to-queue config)
-        processor    (json-reindexer config)]
+        processor    (solr-consumer config)]
     (sub-forever processor)))
 
 ;; ======= DEV NOTES FOLLOW =================================
@@ -62,11 +80,10 @@
                       :queue-name "reindex"
                       :exchange-name "reindex-events"
                       :routing-key "product_reindex"
-                      :solr-urls (clojure.string/split "http://127.0.0.1:8081/solr440/products" #",")}
+                      :solr-urls (clojure.string/split "http://127.0.0.1:8081/solr440" #",")}
         sub-forever  (partial rmq/subscribe-to-queue config)
-        ; can also send json-consumer if you're playing around in
-        ; the REPL
-        processor    (json-reindexer config)]
+        ; can also send json-exhauster/consumer if you're playing around in the REPL
+        processor    (solr-consumer config)]
     (sub-forever processor)))
 
 ;; NOTES
