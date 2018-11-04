@@ -10,7 +10,7 @@ At work, we have batch jobs that update our Solr indexes for product data on a f
 
 There's a separate project that doesn't have these issues, and we're deploying it soon! For the time being, we needed to do something better than engineers running scripts to trigger index updates, but not a full-fledged refactoring of the guts of our e-commerce catalog management. We thought about a self serve "click a button, get a reindex" situation involving an API that gets that request, passes it on to a queue, and a consumer does the actual reindexing. The solutions we found in the rails ecosystem weren't compatible with our stack, and upgrading/shuffling things wasn't worth given that the new replacement project didn't have this issue by design. 
 
-In a "let's pay down this tech debt" frenzy, I decided to look for something we _could_ build with our current stack, with minimal operational complexity. A little jar that used established Java libraries to talk to RabbitMQ (already in use by other projects) seemed like a good idea. Except for the Java part. Enter this little project.
+In a "let's pay down this tech debt" frenzy, I decided to look for something we _could_ build with our current stack, with minimal operational complexity. A little jar that used established Java libraries to talk to RabbitMQ (already in use by other projects), and Solr (itself written in Java) seemed like a good idea. Except for the Java part. Enter this little project.
 
 I coded the whole thing on a Sunday, added some logging refinements on a Monday, bounced the idea off a few people on a Tuesday--with good feedback! Decided to kill it on a Wednesday.
 
