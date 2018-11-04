@@ -1,5 +1,9 @@
 # Reindexer
 
+Little infinite, resilient, logging loop that subscribes to a RabbitMQ queue and expects the messages to be fully-formed solr docs. If they are, it writes them without much ceremony to the configured Solr core (or cores). Meant to help bridge the gap between public web services that know how to derive the docs (but can't, and shouldn't, write to Solr directly due to network configuration, latency, etc.), and Solr. 
+
+**Note**: If you don't want to read through approximately 100 pages of "why I did this for my team at work but then decided not to deploy it because I found an even less disruptive solution", you can skip to [How it works](#how-it-works-or-wouldve-worked)
+
 ## History
 
 At work, we have batch jobs that update our Solr indexes for product data on a fixed schedule. However, sometimes people update products and need to see the changes immediately (or at least much earlier than the next invocation of the indexer jobs); as a bit of tech debt, we didn't build/design code that observes changes to products and triggers one-off Solr updates. For quite a bit, we've had to update products manually (with some scripts). 
