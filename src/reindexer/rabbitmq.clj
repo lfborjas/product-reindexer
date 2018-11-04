@@ -77,12 +77,10 @@
 ;;   ForwardAgent yes
 ;;   User luis
 ;;   LocalForward 5673 rabbitmq:5672
-;; As per the "service catalog": https"//birchbox.atlassian.net/wiki/spaces/TECH/pages/43155572/Service+Catalog#ServiceCatalog-examplesExamples"
 ;; was able to see my connections and stuff here: http://rabbitmq.luis-beta.dev.birchbox.com:15672/#/connections
 ;; There's some examples of producers and consumers in rubyland here:
 ;; https://github.com/birchbox/authentication_sdk/blob/ddac058ab6e8c5413cf58787f60dc724e74b3a53/lib/authentication_sdk/publisher.rb#L13-L16
 ;; https://github.com/birchbox/percolator/blob/master/lib/consumer/base_consumer.rb
-;; and walked through here: https://birchbox.atlassian.net/wiki/spaces/TECH/pages/62586906/Lifecycle+user+API+session+to+asset+broker+visitor+id+entry
 
 ;; reindexer.rabbitmq> (def resp (.basicGet chan "amq.gen-hl_RMM1OkUd7q7iNLDob-w" true))
 ;; #'reindexer.rabbitmq/resp
